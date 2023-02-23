@@ -47,9 +47,6 @@ contract PuppetV2Pool {
         // Take the WETH
         _weth.transferFrom(msg.sender, address(this), amount);
 
-        // internal accounting
-        deposits[msg.sender] += amount;
-
         require(_token.transfer(msg.sender, borrowAmount), "Transfer failed");
 
         emit Borrowed(msg.sender, amount, borrowAmount, block.timestamp);
